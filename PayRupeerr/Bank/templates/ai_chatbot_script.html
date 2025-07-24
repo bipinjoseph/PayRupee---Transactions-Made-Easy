@@ -1,0 +1,318 @@
+<script>
+// AI Chatbot JavaScript
+let currentConversationId = null;
+let isTyping = false;
+
+// Initialize chatbot when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChatbot();
+    setupInputHandlers();
+    showWelcomeMessage();
+});
+
+function initializeChatbot() {
+    // Enable input when user starts typing
+    const chatInput = document.getElementById('chatbotInput');
+    const sendBtn = document.getElementById('chatbotSendBtn');
+    
+    chatInput.addEventListener('input', function() {
+        sendBtn.disabled = this.value.trim() === '';
+    });
+    
+    // Handle Enter key
+    chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !sendBtn.disabled) {
+            sendMessage();
+        }
+    });
+}
+
+function setupInputHandlers() {
+    // Auto-resize input and other UI improvements
+    const chatInput = document.getElementById('chatbotInput');
+    
+    chatInput.addEventListener('focus', function() {
+        document.getElementById('chatbotSuggestions').style.display = 'none';
+    });
+    
+    chatInput.addEventListener('blur', function() {
+        if (this.value.trim() === '') {
+            setTimeout(() => {
+                document.getElementById('chatbotSuggestions').style.display = 'flex';
+            }, 100);
+        }
+    });
+}
+
+function showWelcomeMessage() {
+    // Show typing indicator first, then welcome message
+    setTimeout(() => {
+        const typingIndicator = document.getElementById('typingIndicator');
+        const messageText = document.querySelector('.welcome-message .message-text');
+        
+        typingIndicator.style.display = 'none';
+        messageText.style.display = 'block';
+        
+        // Add timestamp
+        const timeElement = document.querySelector('.welcome-message .message-time');
+        timeElement.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }, 2000);
+}
+
+function toggleChatbot() {
+    const chatbotWindow = document.getElementById('chatbotWindow');
+    const isActive = chatbotWindow.classList.contains('active');
+    
+    if (isActive) {
+        closeChatbot();
+    } else {
+        openChatbot();
+    }
+}
+
+function openChatbot() {
+    const chatbotWindow = document.getElementById('chatbotWindow');
+    chatbotWindow.classList.add('active');
+    
+    // Start conversation if not already started
+    if (!currentConversationId) {
+        startConversation();
+    }
+    
+    // Focus on input
+    setTimeout(() => {
+        document.getElementById('chatbotInput').focus();
+    }, 300);
+}
+
+function closeChatbot() {
+    const chatbotWindow = document.getElementById('chatbotWindow');
+    chatbotWindow.classList.remove('active');
+}
+
+function startConversation() {
+    fetch('/ai/chat/start/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            currentConversationId = data.conversation_id;
+        }
+    })
+    .catch(error => {
+        console.error('Error starting conversation:', error);
+    });
+}
+
+function sendMessage() {
+    const input = document.getElementById('chatbotInput');
+    const message = input.value.trim();
+    
+    if (message === '' || isTyping) return;
+    
+    // Add user message to chat
+    addMessageToChat('user', message);
+    
+    // Clear input
+    input.value = '';
+    document.getElementById('chatbotSendBtn').disabled = true;
+    
+    // Hide suggestions
+    document.getElementById('chatbotSuggestions').style.display = 'none';
+    
+    // Send message to AI
+    sendToAI(message);
+}
+
+function sendQuickMessage(message) {
+    document.getElementById('chatbotInput').value = message;
+    sendMessage();
+}
+
+function addMessageToChat(type, content) {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message';
+    
+    const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    if (type === 'user') {
+        messageDiv.innerHTML = `
+            <div class="user-message">
+                <div class="message-content">
+                    <div class="message-text">${content}</div>
+                </div>
+                <div class="message-time">${currentTime}</div>
+            </div>
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            <div class="ai-message">
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="message-text" style="display: none;">${content}</div>
+                </div>
+                <div class="message-time">${currentTime}</div>
+            </div>
+        `;
+    }
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // If it's an AI message, show typing indicator then message
+    if (type === 'ai') {
+        setTimeout(() => {
+            const typingIndicator = messageDiv.querySelector('.typing-indicator');
+            const messageText = messageDiv.querySelector('.message-text');
+            
+            typingIndicator.style.display = 'none';
+            messageText.style.display = 'block';
+            isTyping = false;
+        }, 1500);
+    }
+}
+
+function sendToAI(message) {
+    if (!currentConversationId) {
+        console.error('No conversation ID available');
+        return;
+    }
+    
+    isTyping = true;
+    
+    const formData = new FormData();
+    formData.append('conversation_id', currentConversationId);
+    formData.append('message', message);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch('/ai/chat/message/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Add AI response to chat
+            addMessageToChat('ai', formatAIResponse(data.response));
+        } else {
+            addMessageToChat('ai', 'Sorry, I encountered an error. Please try again.');
+            isTyping = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+        addMessageToChat('ai', 'Sorry, I\'m having trouble connecting. Please try again.');
+        isTyping = false;
+    });
+}
+
+function formatAIResponse(response) {
+    // Format the AI response for better display
+    let formatted = response;
+    
+    // Convert markdown-style formatting to HTML
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    // Format currency
+    formatted = formatted.replace(/₹([\d,]+\.?\d*)/g, '<span style="color: var(--primary-color); font-weight: 600;">₹$1</span>');
+    
+    // Format percentages
+    formatted = formatted.replace(/(\d+\.?\d*)%/g, '<span style="color: var(--success-color); font-weight: 600;">$1%</span>');
+    
+    return formatted;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Close chatbot when clicking outside
+document.addEventListener('click', function(event) {
+    const chatbotContainer = document.querySelector('.ai-chatbot-container');
+    const chatbotWindow = document.getElementById('chatbotWindow');
+    
+    if (chatbotWindow.classList.contains('active') && 
+        !chatbotContainer.contains(event.target)) {
+        closeChatbot();
+    }
+});
+
+// Prevent chatbot from closing when clicking inside
+document.querySelector('.ai-chatbot-container').addEventListener('click', function(event) {
+    event.stopPropagation();
+});
+
+// Add some smart suggestions based on user behavior
+function updateSuggestions() {
+    const suggestions = document.getElementById('chatbotSuggestions');
+    const currentHour = new Date().getHours();
+    
+    // Time-based suggestions
+    if (currentHour < 12) {
+        // Morning suggestions
+        suggestions.innerHTML = `
+            <button class="suggestion-btn" onclick="sendQuickMessage('Good morning! What is my account balance?')">
+                🌅 Morning Balance Check
+            </button>
+            <button class="suggestion-btn" onclick="sendQuickMessage('Show me yesterday\\'s transactions')">
+                📊 Yesterday's Activity
+            </button>
+            <button class="suggestion-btn" onclick="sendQuickMessage('Any security alerts?')">
+                🔒 Security Check
+            </button>
+        `;
+    } else if (currentHour < 18) {
+        // Afternoon suggestions
+        suggestions.innerHTML = `
+            <button class="suggestion-btn" onclick="sendQuickMessage('How much have I spent today?')">
+                💸 Today's Spending
+            </button>
+            <button class="suggestion-btn" onclick="sendQuickMessage('Show my virtual cards status')">
+                💳 Card Status
+            </button>
+            <button class="suggestion-btn" onclick="sendQuickMessage('Give me budget recommendations')">
+                📈 Budget Tips
+            </button>
+        `;
+    } else {
+        // Evening suggestions
+        suggestions.innerHTML = `
+            <button class="suggestion-btn" onclick="sendQuickMessage('Daily spending summary')">
+                📊 Daily Summary
+            </button>
+            <button class="suggestion-btn" onclick="sendQuickMessage('How can I save more money?')">
+                💡 Savings Tips
+            </button>
+            <button class="suggestion-btn" onclick="sendQuickMessage('Is my account secure for the night?')">
+                🌙 Night Security
+            </button>
+        `;
+    }
+}
+
+// Update suggestions periodically
+setInterval(updateSuggestions, 300000); // Every 5 minutes
+</script>

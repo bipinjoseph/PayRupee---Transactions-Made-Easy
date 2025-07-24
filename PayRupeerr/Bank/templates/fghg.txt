@@ -1,0 +1,1 @@
+            document.getElementById('new-balance').innerHTML=Number(depositAmountDisplay.innerHTML)+Number(currentBalanceDisplay.innerHTML);

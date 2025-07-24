@@ -1,0 +1,276 @@
+/* Animations CSS for PayRupee */
+
+/* Fade In Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Slide In From Bottom */
+@keyframes slideInBottom {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Slide In From Left */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Slide In From Right */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Scale Up Animation */
+@keyframes scaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Bounce Animation */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-20px);
+    }
+    60% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Rotate Animation */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Animation Classes */
+.animate {
+    opacity: 0;
+}
+
+.animate.fade-in {
+    animation: fadeIn var(--animation-medium) ease forwards;
+}
+
+.animate.slide-in-bottom {
+    animation: slideInBottom var(--animation-medium) ease forwards;
+}
+
+.animate.slide-in-left {
+    animation: slideInLeft var(--animation-medium) ease forwards;
+}
+
+.animate.slide-in-right {
+    animation: slideInRight var(--animation-medium) ease forwards;
+}
+
+.animate.scale-up {
+    animation: scaleUp var(--animation-medium) ease forwards;
+}
+
+.animate.bounce {
+    animation: bounce var(--animation-slow) ease forwards;
+}
+
+.animate.pulse {
+    animation: pulse var(--animation-medium) ease infinite;
+}
+
+.animate.rotate {
+    animation: rotate var(--animation-slow) linear infinite;
+}
+
+
+
+/* Animation Delays */
+.delay-100 {
+    animation-delay: 100ms;
+}
+
+.delay-200 {
+    animation-delay: 200ms;
+}
+
+.delay-300 {
+    animation-delay: 300ms;
+}
+
+.delay-400 {
+    animation-delay: 400ms;
+}
+
+.delay-500 {
+    animation-delay: 500ms;
+}
+
+.delay-600 {
+    animation-delay: 600ms;
+}
+
+.delay-700 {
+    animation-delay: 700ms;
+}
+
+.delay-800 {
+    animation-delay: 800ms;
+}
+
+.delay-900 {
+    animation-delay: 900ms;
+}
+
+.delay-1000 {
+    animation-delay: 1000ms;
+}
+
+/* Scroll Animations */
+.scroll-animate {
+    opacity: 0;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.scroll-animate.from-bottom {
+    transform: translateY(50px);
+}
+
+.scroll-animate.from-left {
+    transform: translateX(-50px);
+}
+
+.scroll-animate.from-right {
+    transform: translateX(50px);
+}
+
+.scroll-animate.scale {
+    transform: scale(0.9);
+}
+
+.scroll-animate.visible {
+    opacity: 1;
+    transform: translate(0) scale(1);
+}
+
+/* Button Hover Effects */
+.btn {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    z-index: -1;
+}
+
+.btn:hover::before {
+    left: 0;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btn-outline:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Card Hover Effects */
+.feature-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    background-color: var(--gray-100);
+}
+
+.feature-card:hover .feature-icon {
+    color: var(--primary-dark);
+    transform: scale(1.1);
+}
+
+.feature-icon {
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+/* Interactive Navigation */
+.nav-links a {
+    position: relative;
+}
+
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after {
+    width: 100%;
+}
